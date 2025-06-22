@@ -1,25 +1,25 @@
-import React from 'react'
-import Ahmad from '../../assets/Ahmad.jpg'
+import React from "react";
+import Ahmad from "../../assets/Ahmad.jpg"; // fallback image
 
-export default function User() {
+function User({ user }) {
   return (
     <div>
-        <div className='flex space-x-4 px-8 py-7 hover:bg-slate-600 cursor-pointer' >
-            <div className="avatar online">
-                <div className="w-14 rounded-full">
-                    <img src={Ahmad} />
-                </div>
-            </div>
-
-            <div>
-                <h1 className='font-bold'>
-                    Ahmad Suhaib
-                </h1>
-                <span>
-                    suhaibahmad@gmail.com
-                </span>
-            </div>
+      <div className="flex space-x-4 px-8 py-7 hover:bg-slate-600 duration-300 cursor-pointer">
+        <div className="avatar online">
+          <div className="w-14 rounded-full">
+            <img
+              src={user?.image || Ahmad}
+              alt={user?.name || "User Avatar"}
+            />
+          </div>
         </div>
+        <div>
+          <h1 className="font-bold">{user?.name || "Unknown User"}</h1>
+          <span>{user?.email || "No email provided"}</span>
+        </div>
+      </div>
     </div>
-  )
+  );
 }
+
+export default User;
