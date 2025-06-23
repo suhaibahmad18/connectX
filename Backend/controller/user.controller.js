@@ -9,6 +9,10 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Passwords do not match" });
     }
 
+    if (!name || name.trim() === "") {
+      return res.status(400).json({ error: "Name is required" });
+    }
+
     const user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "Email already exists" });

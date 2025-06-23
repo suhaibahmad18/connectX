@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import userRoute from "./route/user.route.js";
+import userRoute from "./route/user.route.js"; // fixed path
+import messageRoute from "./route/message.route.js"; // added new route
 
 const app = express();
 dotenv.config();
@@ -26,6 +27,7 @@ try {
 
 // Routes
 app.use("/api/user", userRoute);
+app.use("/api/message", messageRoute); // added this line
 
 // Server start
 app.listen(PORT, () => {

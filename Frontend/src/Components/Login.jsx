@@ -41,7 +41,7 @@ export default function Login() {
         className="border border-black px-6 py-3 rounded-md space-y-3 w-96"
       >
         <h1 className="text-2xl text-center text-blue-600 font-bold">
-          Messenger
+          ConnectX
         </h1>
         <h2 className="text-xl text-center">
           Login with your <span className="text-blue-600 font-semibold">Account</span>
