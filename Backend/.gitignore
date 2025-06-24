@@ -22,11 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-
-.DS_Store
-Backend/node_modules/
-Backend/.env
-
-
-
