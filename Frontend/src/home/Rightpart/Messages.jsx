@@ -1,28 +1,43 @@
 import React, { useEffect, useRef } from "react";
 import Message from "./Message";
-import useGetMessage from "../../context/useGetMessage.js";
-import Loading from "../../components/Loading.jsx";
-import useGetSocketMessage from "../../context/useGetSocketMessage.js";
+import useGetMessage from "../../Context/useGetMessage.js";
+import Loading from "../../Components/Loading.jsx";
+import useGetSocketMessage from "../../Context/useGetSocketMessage.js";
 function Messages() {
-  const { loading, messages } = useGetMessage();
+  const { loading, messages, hasMore, loadingOlder, loadOlder } = useGetMessage();
   useGetSocketMessage(); // listing incoming messages
-  console.log(messages);
 
   const lastMsgRef = useRef();
+  const lastMessageId = messages[messages.length - 1]?._id;
+  // Scroll only when the newest message changes, not when older pages are prepended.
   useEffect(() => {
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       if (lastMsgRef.current) {
         lastMsgRef.current.scrollIntoView({
           behavior: "smooth",
         });
       }
     }, 100);
-  }, [messages]);
+    return () => clearTimeout(timer);
+  }, [lastMessageId]);
   return (
     <div
       className="flex-1 overflow-y-auto"
       style={{ minHeight: "calc(92vh - 8vh)" }}
     >
+      {!loading && hasMore && (
+        <div className="text-center py-2">
+          <button
+            type="button"
+            className="btn btn-xs btn-ghost"
+            onClick={loadOlder}
+            disabled={loadingOlder}
+          >
+            {loadingOlder ? "Loading..." : "Load older messages"}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <Loading />
       ) : (

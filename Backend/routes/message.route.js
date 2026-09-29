@@ -1,9 +1,28 @@
 import express from "express";
-import { getMessage, sendMessage } from "../controller/message.controller.js";
+import { getMessages, sendMessage } from "../controller/message.controller.js";
 import secureRoute from "../middleware/secureRoute.js";
+import validate from "../middleware/validate.js";
+import { messageLimiter } from "../middleware/rateLimiters.js";
+import {
+  conversationParamsSchema,
+  messagePageQuerySchema,
+  sendMessageSchema,
+} from "../validation/schemas.js";
 
 const router = express.Router();
-router.post("/send/:id", secureRoute, sendMessage);
-router.get("/get/:id", secureRoute, getMessage);
+
+router.get(
+  "/:conversationId",
+  secureRoute,
+  validate({ params: conversationParamsSchema, query: messagePageQuerySchema }),
+  getMessages
+);
+router.post(
+  "/:conversationId",
+  secureRoute,
+  messageLimiter,
+  validate({ params: conversationParamsSchema, body: sendMessageSchema }),
+  sendMessage
+);
 
 export default router;

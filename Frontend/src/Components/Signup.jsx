@@ -1,7 +1,7 @@
 import React from "react";
 import { useForm } from "react-hook-form";
-import axios from "axios";
-import { useAuth } from "../context/AuthProvider";
+import { useAuth } from "../Context/AuthProvider";
+import api from "../lib/api.js";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
 function Signup() {
@@ -28,7 +28,7 @@ function Signup() {
       confirmPassword: data.confirmPassword,
     };
     // console.log(userInfo);
-    await axios
+    await api
       .post("/api/user/signup", userInfo)
       .then((response) => {
         if (response.data) {

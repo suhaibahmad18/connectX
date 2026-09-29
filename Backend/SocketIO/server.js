@@ -1,41 +1,59 @@
 import { Server } from "socket.io";
-import http from "http";
-import express from "express";
+import cookieParser from "cookie-parser";
+import { env } from "../config/env.js";
+import { AUTH_COOKIE_NAME, getUserFromToken } from "../middleware/secureRoute.js";
+import { addConnection, getOnlineUserIds, removeConnection } from "./presence.js";
 
-const app = express();
+let io = null;
 
-const server = http.createServer(app);
-const io = new Server(server, {
-  cors: {
-    origin: "http://localhost:4001",
-    methods: ["GET", "POST"],
-  },
-});
+// Every socket joins its user's room; emitting to rooms (not raw socket ids) is what lets
+// the Phase 2 Redis adapter fan events out across instances without changing callers.
+const userRoom = (userId) => `user:${userId}`;
 
-// realtime message code goes here
-export const getReceiverSocketId = (receiverId) => {
-  return users[receiverId];
+export const initSocket = (httpServer) => {
+  io = new Server(httpServer, {
+    cors: {
+      origin: env.clientOrigins,
+      credentials: true,
+    },
+  });
+
+  // Parses the httpOnly auth cookie on the handshake request.
+  io.engine.use(cookieParser());
+
+  io.use(async (socket, next) => {
+    try {
+      const user = await getUserFromToken(socket.request.cookies?.[AUTH_COOKIE_NAME]);
+      if (!user) return next(new Error("Unauthorized"));
+      socket.data.userId = String(user._id);
+      next();
+    } catch (error) {
+      console.error("Socket authentication error:", error.message);
+      next(new Error("Unauthorized"));
+    }
+  });
+
+  io.on("connection", (socket) => {
+    const { userId } = socket.data;
+    socket.join(userRoom(userId));
+
+    if (addConnection(userId)) {
+      io.emit("getOnlineUsers", getOnlineUserIds());
+    } else {
+      socket.emit("getOnlineUsers", getOnlineUserIds());
+    }
+
+    socket.on("disconnect", () => {
+      if (removeConnection(userId)) {
+        io.emit("getOnlineUsers", getOnlineUserIds());
+      }
+    });
+  });
+
+  return io;
 };
 
-const users = {};
-
-// used to listen events on server side.
-io.on("connection", (socket) => {
-  console.log("a user connected", socket.id);
-  const userId = socket.handshake.query.userId;
-  if (userId) {
-    users[userId] = socket.id;
-    console.log("Hello ", users);
-  }
-  // used to send the events to all connected users
-  io.emit("getOnlineUsers", Object.keys(users));
-
-  // used to listen client side events emitted by server side (server & client)
-  socket.on("disconnect", () => {
-    console.log("a user disconnected", socket.id);
-    delete users[userId];
-    io.emit("getOnlineUsers", Object.keys(users));
-  });
-});
-
-export { app, io, server };
+export const emitToUsers = (userIds, event, payload) => {
+  if (!io || userIds.length === 0) return;
+  io.to(userIds.map((id) => userRoom(String(id)))).emit(event, payload);
+};

@@ -1,14 +1,18 @@
 import React, { createContext, useContext, useState } from "react";
-import Cookies from "js-cookie";
 export const AuthContext = createContext();
-export const AuthProvider = ({ children }) => {
-  const initialUserState =
-    Cookies.get("jwt") || localStorage.getItem("ChatApp");
 
-  // parse the user data and storing in state.
-  const [authUser, setAuthUser] = useState(
-    initialUserState ? JSON.parse(initialUserState) : undefined
-  );
+// Only the public user profile lives in localStorage; the JWT stays in an httpOnly cookie JS can't read.
+const readStoredUser = () => {
+  try {
+    const stored = localStorage.getItem("ChatApp");
+    return stored ? JSON.parse(stored) : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export const AuthProvider = ({ children }) => {
+  const [authUser, setAuthUser] = useState(readStoredUser);
   return (
     <AuthContext.Provider value={[authUser, setAuthUser]}>
       {children}

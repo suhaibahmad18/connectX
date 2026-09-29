@@ -1,6 +1,6 @@
 import React from "react";
 import useConversation from "../../statemanage/useConversation.js";
-import { useSocketContext } from "../../context/SocketContext.jsx";
+import { useSocketContext } from "../../Context/SocketContext.jsx";
 import Avatar from "../../assets/avatar.avif";
 
 function Chatuser() {

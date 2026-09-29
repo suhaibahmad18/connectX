@@ -1,34 +1,33 @@
-import express from "express";
-import dotenv from "dotenv";
+import http from "http";
 import mongoose from "mongoose";
-import cors from "cors";
-import cookieParser from "cookie-parser";
 
-import userRoute from "./routes/user.route.js";
-import messageRoute from "./routes/message.route.js";
-import { app, server } from "./SocketIO/server.js";
+import { env } from "./config/env.js";
+import { connectDB, redactMongoError } from "./config/db.js";
+import app from "./app.js";
+import { initSocket } from "./SocketIO/server.js";
 
-dotenv.config();
-
-// middleware
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors());
-
-const PORT = process.env.PORT || 4001;
-const URI = process.env.MONGODB_URI;
+const server = http.createServer(app);
+const io = initSocket(server);
 
 try {
-    mongoose.connect(URI);
-    console.log("Connected to MongoDB");
+  await connectDB();
 } catch (error) {
-    console.log(error);
+  console.error("Failed to connect to MongoDB:", redactMongoError(error));
+  process.exit(1);
 }
 
-//routes
-app.use("/api/user", userRoute);
-app.use("/api/message", messageRoute);
-
-server.listen(PORT, () => {
-    console.log(`Server is Running on port ${PORT}`);
+server.listen(env.port, () => {
+  console.log(`Server is Running on port ${env.port}`);
 });
+
+const shutdown = (signal) => {
+  console.log(`${signal} received, shutting down`);
+  setTimeout(() => process.exit(1), 10000).unref();
+  io.close(async () => {
+    await mongoose.connection.close();
+    process.exit(0);
+  });
+};
+
+process.on("SIGINT", () => shutdown("SIGINT"));
+process.on("SIGTERM", () => shutdown("SIGTERM"));
